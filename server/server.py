@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 from flask import Flask
 from flask_restful import Api, Resource
-#import cv2
-import sys
-import threading
-import os
+import cv2
 
 # Server constants
 app = Flask(__name__)
 api = Api(app)
 
 # Constants
-"""DEVICE_NUMBER = 0
+DEVICE_NUMBER = 0
 FONT_FACES = [
     cv2.FONT_HERSHEY_SIMPLEX,
     cv2.FONT_HERSHEY_PLAIN,
@@ -21,75 +18,48 @@ FONT_FACES = [
     cv2.FONT_HERSHEY_COMPLEX_SMALL,
     cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,
     cv2.FONT_HERSHEY_SCRIPT_COMPLEX
-]"""
+]
 
-#region Camera Thread
-class CameraThread(threading.Thread):
-    #faceCascade = cv2.CascadeClassifier('cars.xml')
-    #vc = cv2.VideoCapture(DEVICE_NUMBER)
+
+# region AvailableLots
+class AvailableLots(Resource):
+    faceCascade = cv2.CascadeClassifier('cars.xml')
+    vc = cv2.VideoCapture(DEVICE_NUMBER)
     i = 0
-    faces = []
-    cars = 0
-    DEVICE_NUMBER = 0
 
-    def getLatestCarsDetected(self):
-        return self.cars
+    def getLots(self):
+        if not self.vc.isOpened():  # try to get the first frame
+            # http://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#videocapture-read
+            return 0
+        else:
+            suma = 0
 
-    def getDeviceNumer(self):
-        return self.DEVICE_NUMBER
-
-    def run(self):
-        print 'Running thread'
-
-        while True:
-            if self.i % 5 == 0:
-                """if self.vc.isOpened():  # try to get the first frame
-                    # http://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#videocapture-read
-                    retval, frame = self.vc.read()
-                else:
-                    # Exit the program
-                    break
+            for x in range(0, 5):
+                retval, frame = self.vc.read()
+                # Exit the program
 
                 frame_show = frame
 
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 faces = self.faceCascade.detectMultiScale(
                     frame,
-                    scaleFactor=1.2,
-                    minNeighbors=2,
-                    minSize=(50, 50),
+                    scaleFactor=10,
+                    minNeighbors=1,
+                    minSize=(5, 5),
+                    maxSize=(5, 10),
                     flags=cv2.cv.CV_HAAR_SCALE_IMAGE
                 )
 
-                cv2.imshow('frame', frame)
+                print 'Cars: ' + str(len(faces))
+                suma += len(faces)
 
-                print len(faces)
-                cars = len(faces)"""
-
-                self.cars += 1
-
-            self.i += 1
-
-    def __init__(self, DEVICE_NUMBER=0):
-        super(CameraThread, self).__init__()
-        self.DEVICE_NUMBER = DEVICE_NUMBER
-        self.start()
-#endregion
-
-#region AvailableLots
-class AvailableLots(Resource):
-
-    cameraThread = CameraThread(DEVICE_NUMBER=0)
-    cameraThread2 = CameraThread(DEVICE_NUMBER=1)
+            return (suma / 5)
 
     def get(self):
         return {
-            'available1': self.cameraThread.getLatestCarsDetected(),
-            'device1': self.cameraThread.getDeviceNumer(),
-            'available2': self.cameraThread2.getLatestCarsDetected(),
-            'device2': self.cameraThread2.getDeviceNumer()
-        }
-#endregion
+            'available': self.getLots()
+        }  # endregion
+
 
 # Actually setup the Api resource routing here
 api.add_resource(AvailableLots, '/available')
