@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 from flask import Flask
 from flask_restful import Api, Resource
-import cv2, sys, threading, os
+#import cv2
+import sys
+import threading
+import os
 
 # Server constants
 app = Flask(__name__)
 api = Api(app)
 
 # Constants
-DEVICE_NUMBER = 0
+"""DEVICE_NUMBER = 0
 FONT_FACES = [
     cv2.FONT_HERSHEY_SIMPLEX,
     cv2.FONT_HERSHEY_PLAIN,
@@ -18,25 +21,29 @@ FONT_FACES = [
     cv2.FONT_HERSHEY_COMPLEX_SMALL,
     cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,
     cv2.FONT_HERSHEY_SCRIPT_COMPLEX
-]
+]"""
 
 #region Camera Thread
 class CameraThread(threading.Thread):
-    faceCascade = cv2.CascadeClassifier('cars.xml')
-    vc = cv2.VideoCapture(DEVICE_NUMBER)
+    #faceCascade = cv2.CascadeClassifier('cars.xml')
+    #vc = cv2.VideoCapture(DEVICE_NUMBER)
     i = 0
     faces = []
     cars = 0
+    DEVICE_NUMBER = 0
 
     def getLatestCarsDetected(self):
         return self.cars
+
+    def getDeviceNumer(self):
+        return self.DEVICE_NUMBER
 
     def run(self):
         print 'Running thread'
 
         while True:
             if self.i % 5 == 0:
-                if self.vc.isOpened():  # try to get the first frame
+                """if self.vc.isOpened():  # try to get the first frame
                     # http://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#videocapture-read
                     retval, frame = self.vc.read()
                 else:
@@ -57,28 +64,31 @@ class CameraThread(threading.Thread):
                 cv2.imshow('frame', frame)
 
                 print len(faces)
-                cars = len(faces)
+                cars = len(faces)"""
 
-        self.i += 1
+                self.cars += 1
 
-    def __init__(self):
+            self.i += 1
+
+    def __init__(self, DEVICE_NUMBER=0):
         super(CameraThread, self).__init__()
-        self.run()
+        self.DEVICE_NUMBER = DEVICE_NUMBER
+        self.start()
 #endregion
 
 #region AvailableLots
 class AvailableLots(Resource):
 
-    cameraThread = CameraThread()
+    cameraThread = CameraThread(DEVICE_NUMBER=0)
+    cameraThread2 = CameraThread(DEVICE_NUMBER=1)
 
     def get(self):
         return {
-            'available': self.cameraThread.getLatestCarsDetected()
+            'available1': self.cameraThread.getLatestCarsDetected(),
+            'device1': self.cameraThread.getDeviceNumer(),
+            'available2': self.cameraThread2.getLatestCarsDetected(),
+            'device2': self.cameraThread2.getDeviceNumer()
         }
-
-    def __init__(self):
-        super(AvailableLots, self).__init__()
-        self.cameraThread.run()
 #endregion
 
 # Actually setup the Api resource routing here
