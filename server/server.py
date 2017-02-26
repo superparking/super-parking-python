@@ -2,6 +2,9 @@
 from flask import Flask
 from flask_restful import Api, Resource
 import cv2, threading
+import resquests 
+
+
 
 # Server constants
 app = Flask(__name__)
@@ -53,6 +56,8 @@ class CameraThread(threading.Thread):
                 if self.tem != len(faces):
                     print len(faces)
                     self.tem = len(faces)
+					r=requests.post("https://super-parking.herokuapp.com/available/"+str(tem))
+					print r
 
                 for (x, y, w, h) in faces:
                     cv2.rectangle(frame_show, (x, y), (x + w, y + h), (0, 0, 255), 2)
@@ -74,7 +79,7 @@ cThread = CameraThread()
 class AvailableLots(Resource):
     def get(self):
         return {
-            'available': cThread.getAvailableLots()
+            'available': cThread.getAvailableLots() < 4
         }
 
 
@@ -85,4 +90,4 @@ class AvailableLots(Resource):
 api.add_resource(AvailableLots, '/available')
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='10.33.1.250', port=8080)
