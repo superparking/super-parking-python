@@ -1,34 +1,36 @@
 #!/usr/bin/env python
 from flask import Flask
 from flask_restful import Api, Resource
-import cv2
+import cv2, threading
 
 # Server constants
 app = Flask(__name__)
 api = Api(app)
 
-# Constants
-DEVICE_NUMBER = 0
-FONT_FACES = [
-    cv2.FONT_HERSHEY_SIMPLEX,
-    cv2.FONT_HERSHEY_PLAIN,
-    cv2.FONT_HERSHEY_DUPLEX,
-    cv2.FONT_HERSHEY_COMPLEX,
-    cv2.FONT_HERSHEY_TRIPLEX,
-    cv2.FONT_HERSHEY_COMPLEX_SMALL,
-    cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,
-    cv2.FONT_HERSHEY_SCRIPT_COMPLEX
-]
 
-
-# region AvailableLots
-class AvailableLots(Resource):
+# region Thread
+class CameraThread(threading.Thread):
+    # Constants
+    DEVICE_NUMBER = 0
+    FONT_FACES = [
+        cv2.FONT_HERSHEY_SIMPLEX,
+        cv2.FONT_HERSHEY_PLAIN,
+        cv2.FONT_HERSHEY_DUPLEX,
+        cv2.FONT_HERSHEY_COMPLEX,
+        cv2.FONT_HERSHEY_TRIPLEX,
+        cv2.FONT_HERSHEY_COMPLEX_SMALL,
+        cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,
+        cv2.FONT_HERSHEY_SCRIPT_COMPLEX
+    ]
     faceCascade = cv2.CascadeClassifier('cars.xml')
     vc = cv2.VideoCapture(DEVICE_NUMBER)
     i = 0
     tem = 0
 
-    def getLots(self):
+    def getAvailableLots(self):
+        return self.tem
+
+    def run(self):
         if not self.vc.isOpened():  # try to get the first frame
             # http://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#videocapture-read
             return -1
@@ -55,16 +57,28 @@ class AvailableLots(Resource):
                 for (x, y, w, h) in faces:
                     cv2.rectangle(frame_show, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
-                    # http://docs.opencv.org/2.4/modules/highgui/doc/user_interface.html#imshow
-                cv2.imshow("DB410c Workshop", frame_show)
                 retval, frame = self.vc.read()
 
                 self.i += 1
 
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
+        super(CameraThread, self).__init__(group, target, name, args, kwargs, verbose)
+        self.start()
+
+
+# endregion
+
+cThread = CameraThread()
+
+# region AvailableLots
+class AvailableLots(Resource):
     def get(self):
         return {
-            'available': self.getLots()
-        }  # endregion
+            'available': cThread.getAvailableLots()
+        }
+
+
+# endregion
 
 
 # Actually setup the Api resource routing here
