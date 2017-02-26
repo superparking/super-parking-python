@@ -2,7 +2,7 @@
 from flask import Flask
 from flask_restful import Api, Resource
 import cv2, threading
-import resquests 
+import requests
 
 
 
@@ -56,8 +56,8 @@ class CameraThread(threading.Thread):
                 if self.tem != len(faces):
                     print len(faces)
                     self.tem = len(faces)
-					r=requests.post("https://super-parking.herokuapp.com/available/"+str(tem))
-					print r
+                    r=requests.post("https://super-parking.herokuapp.com/available/"+str(self.tem))
+                    print r
 
                 for (x, y, w, h) in faces:
                     cv2.rectangle(frame_show, (x, y), (x + w, y + h), (0, 0, 255), 2)
