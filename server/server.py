@@ -30,30 +30,35 @@ class AvailableLots(Resource):
     def getLots(self):
         if not self.vc.isOpened():  # try to get the first frame
             # http://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#videocapture-read
-            return 0
+            return -1
         else:
-            suma = 0
+            retval, frame = self.vc.read()
 
-            for x in range(0, 5):
-                retval, frame = self.vc.read()
-                # Exit the program
+            while True:
+                suma = 0
 
                 frame_show = frame
+                if self.i % 5 == 0:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    faces = self.faceCascade.detectMultiScale(
+                        frame,
+                        scaleFactor=1.2,
+                        minNeighbors=2,
+                        minSize=(50, 50),
+                        flags=cv2.cv.CV_HAAR_SCALE_IMAGE
+                    )
+                if tem != len(faces):
+                    print len(faces)
+                    tem = len(faces)
 
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                faces = self.faceCascade.detectMultiScale(
-                    frame,
-                    scaleFactor=10,
-                    minNeighbors=1,
-                    minSize=(5, 5),
-                    maxSize=(5, 10),
-                    flags=cv2.cv.CV_HAAR_SCALE_IMAGE
-                )
+                for (x, y, w, h) in faces:
+                    cv2.rectangle(frame_show, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
-                print 'Cars: ' + str(len(faces))
-                suma += len(faces)
+                    # http://docs.opencv.org/2.4/modules/highgui/doc/user_interface.html#imshow
+                cv2.imshow("DB410c Workshop", frame_show)
+                retval, frame = self.vc.read()
 
-            return (suma / 5)
+                self.i += 1
 
     def get(self):
         return {
