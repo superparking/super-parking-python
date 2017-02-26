@@ -26,6 +26,7 @@ class AvailableLots(Resource):
     faceCascade = cv2.CascadeClassifier('cars.xml')
     vc = cv2.VideoCapture(DEVICE_NUMBER)
     i = 0
+    tem = 0
 
     def getLots(self):
         if not self.vc.isOpened():  # try to get the first frame
@@ -47,9 +48,9 @@ class AvailableLots(Resource):
                         minSize=(50, 50),
                         flags=cv2.cv.CV_HAAR_SCALE_IMAGE
                     )
-                if tem != len(faces):
+                if self.tem != len(faces):
                     print len(faces)
-                    tem = len(faces)
+                    self.tem = len(faces)
 
                 for (x, y, w, h) in faces:
                     cv2.rectangle(frame_show, (x, y), (x + w, y + h), (0, 0, 255), 2)
@@ -70,4 +71,4 @@ class AvailableLots(Resource):
 api.add_resource(AvailableLots, '/available')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
